@@ -1,36 +1,57 @@
 import pandas as pd
 import matplotlib.pyplot as plt
-import seaborn as sns
+import numpy as np
 
-# Load the Pokémon dataset
+# Load the CSV file
 file_path = 'PokemonDataset/pokemon.csv'
 pokemon_data = pd.read_csv(file_path)
 
-# Set up the matplotlib figure
-fig, axes = plt.subplots(2, 2, figsize=(14, 10))
-fig.suptitle('Distribution of Pokémon Attributes', fontsize=16)
+#region DISTRIBUTIONS OF HEIGHT, WEIGHT, ATTACK, DEFENCE, AND HEALTH
+# Extracting the relevant columns
+height_data = pokemon_data['height_m']
+weight_data = pokemon_data['weight_kg']
+attack_data = pokemon_data['attack']
+defence_data = pokemon_data['defense']
+health_data = pokemon_data['hp']
 
-# Plotting each attribute
-sns.histplot(data=pokemon_data, x='attack', kde=True, ax=axes[0, 0], color='red')
-axes[0, 0].set_title('Attack Distribution')
-axes[0, 0].set_xlabel('Attack')
-axes[0, 0].set_ylabel('Frequency')
 
-sns.histplot(data=pokemon_data, x='hp', kde=True, ax=axes[0, 1], color='blue')
-axes[0, 1].set_title('Max Health (HP) Distribution')
-axes[0, 1].set_xlabel('HP')
-axes[0, 1].set_ylabel('Frequency')
+# Function to plot distribution
+def plot_distribution(data, title, xlabel):
+    plt.figure(figsize=(10, 6))
+    plt.hist(data, bins=30, edgecolor='k', alpha=0.7)
+    plt.title(title)
+    plt.xlabel(xlabel)
+    plt.ylabel('Frequency')
+    plt.grid(axis='y', alpha=0.75)
+    plt.show()
 
-sns.histplot(data=pokemon_data, x='weight_kg', kde=True, ax=axes[1, 0], color='green')
-axes[1, 0].set_title('Weight Distribution')
-axes[1, 0].set_xlabel('Weight (kg)')
-axes[1, 0].set_ylabel('Frequency')
 
-sns.histplot(data=pokemon_data, x='height_m', kde=True, ax=axes[1, 1], color='purple')
-axes[1, 1].set_title('Height Distribution')
-axes[1, 1].set_xlabel('Height (m)')
-axes[1, 1].set_ylabel('Frequency')
+# Plotting the distributions
+plot_distribution(height_data, 'Distribution of Pokemon Heights', 'Height (m)')
+plot_distribution(weight_data, 'Distribution of Pokemon Weights', 'Weight (kg)')
+plot_distribution(attack_data, 'Distribution of Pokemon Attack', 'Attack')
+plot_distribution(defence_data, 'Distribution of Pokemon Defence', 'Defence')
+plot_distribution(health_data, 'Distribution of Pokemon Health', 'Health')
+#endregion DISTRIBUTIONS OF HEIGHT, WEIGHT, ATTACK, DEFENCE, AND HEALTH
 
-# Adjust layout
-plt.tight_layout(rect=[0, 0.03, 1, 0.95])
-plt.show()
+#region CORRELATION WITH TYPES
+# One-hot encode the type1 and type2 columns
+pokemon_data_encoded = pd.get_dummies(pokemon_data, columns=['type1', 'type2'])
+
+# Select the relevant columns for correlation analysis
+stats_data = pokemon_data_encoded[['height_m', 'weight_kg', 'attack', 'defense', 'hp']]
+type_columns = [col for col in pokemon_data_encoded.columns if col.startswith('type1_') or col.startswith('type2_')]
+
+# Calculate correlation
+correlation_matrix = stats_data.join(pokemon_data_encoded[type_columns]).corr()
+
+# Extract correlations of types with each stat
+correlations = {}
+for stat in ['height_m', 'weight_kg', 'attack', 'defense', 'hp']:
+    correlations[stat] = correlation_matrix[[stat]].loc[type_columns]
+
+# Display each correlation table
+for stat in correlations:
+    print(f"Correlation of Pokémon Types with {stat.capitalize()}")
+    print(correlations[stat], '\n')
+#endregion CORRELATION WITH TYPES
